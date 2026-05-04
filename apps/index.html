@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArtiClustor Editor</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 0: Header -->
+<header id="header">
+  <h1>ArtiClustor Editor</h1>
+  <button id="btn-new">New</button>
+  <button id="btn-load">Load</button>
+  <button id="btn-save">Save</button>
+  <input type="file" id="file-input" accept=".yaml,.yml" style="display:none">
+</header>
+
+<!-- 1: General Edit -->
+<div id="general-edit">
+  <h2>General Edit</h2>
+  <div class="field-row">
+    <label for="f-id">ID</label>
+    <input type="text" id="f-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+  </div>
+  <div class="field-row">
+    <label for="f-author">Author</label>
+    <input type="text" id="f-author">
+  </div>
+  <div class="field-row">
+    <label for="f-manufacturer">Manufacture</label>
+    <input type="text" id="f-manufacturer">
+  </div>
+  <div class="field-row">
+    <label for="f-product">Product</label>
+    <input type="text" id="f-product">
+  </div>
+  <div class="field-row">
+    <label for="f-patch">Patch</label>
+    <input type="text" id="f-patch">
+  </div>
+  <div class="field-row">
+    <label for="f-description">Description</label>
+    <input type="text" id="f-description">
+  </div>
+  <div class="field-row">
+    <label>Extra</label>
+    <button id="btn-def-extra">Edit</button>
+  </div>
+</div>
+
+<!-- 2 + 3: Articulation List & Edit -->
+<div id="main">
+  <div id="lower">
+    <div id="articulation-list">
+      <div class="list-header">
+        <span>Articulations</span>
+        <button id="btn-add-articulation" title="Add articulation">+</button>
+      </div>
+      <div id="artic-list-body"></div>
+    </div>
+
+    <div id="articulation-edit">
+      <h2>Articulation Edit</h2>
+      <div id="artic-edit-content">
+        <p id="artic-edit-placeholder">← Select or add an articulation</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Extra Modal -->
+<div id="modal-overlay">
+  <div id="extra-modal">
+    <div class="modal-header">
+      <h3>Extra</h3>
+      <button id="btn-modal-close">✕</button>
+    </div>
+    <div id="extra-col-header">
+      <span>Key</span>
+      <span>Value</span>
+    </div>
+    <div id="extra-rows-container"></div>
+    <button id="btn-add-extra">Add</button>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
