@@ -328,6 +328,21 @@ button:hover { background: #283593; }
 .toast.error   { background: #c0392b; }
 .toast.fadeout { opacity: 0; }
 
+/* ── Footer ── */
+#footer {
+  background: #3949AB;
+  color: rgba(255,255,255,0.85);
+  font-size: 12px;
+  padding: 6px 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+#footer a {
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+}
+#footer a:hover { text-decoration: underline; }
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   #lower { flex-direction: column; }
