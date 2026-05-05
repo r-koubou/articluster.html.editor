@@ -1,3 +1,5 @@
 .[Tt]emp
 .[Oo]rg
 .[Ww]ork
+*.bak
+*.org
