@@ -25,13 +25,12 @@ const MIDI_BASE_TO_TYPE = Object.fromEntries(
   Object.entries(MIDI_TYPE_BASE).map(([k, v]) => [v, k])
 );
 
-function encodeStatus(type, channel) {
-  return (MIDI_TYPE_BASE[type] || 0x90) | (channel & 0x0F);
+function encodeStatus(type) {
+  return MIDI_TYPE_BASE[type] || 0x90;
 }
 function decodeStatus(byte) {
   const base = byte & 0xF0;
-  const channel = byte & 0x0F;
-  return { type: MIDI_BASE_TO_TYPE[base] || 'Note On', channel };
+  return { type: MIDI_BASE_TO_TYPE[base] || 'Note On' };
 }
 
 // ─────────────────────────────────────────────
@@ -60,7 +59,7 @@ function newArticulation() {
   return { Name: 'New Articulation', MidiMessages: [], Extra: {} };
 }
 function newMidiMessage() {
-  return { type: 'Note On', channel: 0, Data1: 0, Data2: 0 };
+  return { type: 'Note On', Channel: -1, Data1: 0, Data2: 0 };
 }
 
 // ─────────────────────────────────────────────
@@ -221,12 +220,16 @@ function createMidiRow(msg, mi, artic) {
 
   const chLabel = document.createElement('span');
   chLabel.className = 'midi-label';
-  chLabel.textContent = 'Ch';
+  chLabel.textContent = 'Channel';
   const chInput = document.createElement('input');
   chInput.type = 'number';
-  chInput.min = 0; chInput.max = 15;
-  chInput.value = msg.channel !== undefined ? msg.channel : 0;
-  chInput.addEventListener('input', e => { msg.channel = parseInt(e.target.value) || 0; });
+  chInput.min = -1; chInput.max = 15;
+  chInput.value = msg.Channel !== undefined ? msg.Channel : -1;
+  chInput.placeholder = '-1';
+  chInput.addEventListener('input', e => {
+    const v = parseInt(e.target.value);
+    msg.Channel = isNaN(v) ? -1 : Math.max(-1, Math.min(15, v));
+  });
 
   const d1Label = document.createElement('span');
   d1Label.className = 'midi-label';
@@ -262,7 +265,7 @@ function createMidiRow(msg, mi, artic) {
     renderArticulationEdit();
   });
 
-  row.append(idx, statusLabel, statusSel, chLabel, chInput, d1Label, d1Input, d2Label, d2Input, delBtn);
+  row.append(idx, chLabel, chInput, statusLabel, statusSel, d1Label, d1Input, d2Label, d2Input, delBtn);
   return row;
 }
 
@@ -383,8 +386,11 @@ function exportYaml() {
         lines[lines.length - 1] += ' []';
       } else {
         artic.MidiMessages.forEach(msg => {
-          const status = encodeStatus(msg.type, msg.channel);
+          const status = encodeStatus(msg.type);
           lines.push(`      - Status: ${status}`);
+          if (msg.Channel !== undefined && msg.Channel !== -1) {
+            lines.push(`        Channel: ${msg.Channel}`);
+          }
           if (msg.Data1 !== undefined && msg.Data1 !== null && msg.Data1 !== '') {
             lines.push(`        Data1: ${msg.Data1}`);
           }
@@ -599,8 +605,9 @@ function loadDefinitionFromObj(obj) {
       if (Array.isArray(a.MidiMessages)) {
         artic.MidiMessages = a.MidiMessages.map(m => {
           const status = parseInt(m.Status) || 0;
-          const { type, channel } = decodeStatus(status);
-          const msg = { type, channel };
+          const { type } = decodeStatus(status);
+          const Channel = (m.Channel != null) ? parseInt(m.Channel) : -1;
+          const msg = { type, Channel };
           if (m.Data1 != null) msg.Data1 = parseInt(m.Data1);
           if (m.Data2 != null) msg.Data2 = parseInt(m.Data2);
           return msg;
