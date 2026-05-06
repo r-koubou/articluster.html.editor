@@ -1,20 +1,22 @@
-# エディタのデザイン改善
+# MIDIチャンネル情報の仕様変更
 
 ## 課題
 
-フッターを作成し忘れていた
+DAW1によっては明示的にMIDIチャンネルを指定する、しないという情報を持っている場合があることが分かった。
+現在のこのエディタの仕様では、ステータスバイトにチャンネル情報を含めている。 (`status | channel`)
+
+JSONスキーマ `universal-definition-schema.json` を更新し、MidiMessageオブジェクトに新たに `Channel` というフィールドを追加した。
 
 ### 成果物の要件
 
-フッターに以下の要素を追加されていること
-
-- GitHub リポジトリへのリンク - https://github.com/r-koubou/articluster.html.editor
-- Copyright の表記 - `(c) R-Koubou All rights reserved.`
+- エディタで Channel 単体の値を保持することができるようにする
+- YAML読み込みの際に MidiMessage オブジェクトの Channel の値を読み取る。存在しない場合は -1を入れる
+- YAML書き込みの際に MidiMessage オブジェクトの Channel の値を出力する。-1 の場合は含めなくて良い
 
 ## タスク内容
 
 - [x] 実現可能性、方向性のすり合わせを人間とともに行う
-- [x] デザイン調整
+- [x] JSコード修正
 - [x] 動作確認を行う
-    - [x] UIの動作確認
+    - [x] 動作確認
     - [x] リグレッションテスト
