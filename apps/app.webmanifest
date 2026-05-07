@@ -2,8 +2,8 @@
   "name": "ArtiCluster Editor",
   "short_name": "ArtiCluster",
   "icons": [
-    { "src": "favicon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "favicon-384.png", "sizes": "384x384", "type": "image/png" },
-    { "src": "favicon-192.png", "sizes": "192x192", "type": "image/png" }
+    { "src": "/icon/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon/favicon-384.png", "sizes": "384x384", "type": "image/png" },
+    { "src": "/icon/favicon-192.png", "sizes": "192x192", "type": "image/png" }
   ]
 }
