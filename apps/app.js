@@ -50,7 +50,9 @@ function newEmptyDefinition() {
     ProductName: '',
     PatchName: '',
     Description: '',
-    Articulations: [],
+    Articulations: [
+        { Name: 'Idle', MidiMessages: [], Extra: {} }
+    ],
     Extra: {},
   };
 }
