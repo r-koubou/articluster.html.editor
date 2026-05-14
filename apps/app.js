@@ -1,6 +1,11 @@
 'use strict';
 
 // ─────────────────────────────────────────────
+// Format version
+// ─────────────────────────────────────────────
+const FORMAT_VERSION = 1;
+
+// ─────────────────────────────────────────────
 // MIDI constants
 // ─────────────────────────────────────────────
 const MIDI_TYPES = [
@@ -44,6 +49,7 @@ let state = {
 
 function newEmptyDefinition() {
   return {
+    FormatVersion: FORMAT_VERSION,
     Id: crypto.randomUUID(),
     Author: '',
     ManufacturerName: '',
@@ -370,6 +376,7 @@ function exportYaml() {
   const d = state.definition;
   const lines = [];
 
+  lines.push(`FormatVersion: ${FORMAT_VERSION}`);
   lines.push(`Id: ${yamlQuote(d.Id)}`);
   lines.push(`Author: ${yamlQuote(d.Author)}`);
   lines.push(`ManufacturerName: ${yamlQuote(d.ManufacturerName)}`);
@@ -587,8 +594,19 @@ function parseBlock(lines, start, baseIndent) {
 }
 
 function loadDefinitionFromObj(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+
+  const fv = obj.FormatVersion;
+  if (fv === undefined || fv === null) {
+    alert('FormatVersion is missing in the file. Loading aborted.');
+    return null;
+  }
+  if (fv !== FORMAT_VERSION) {
+    alert(`FormatVersion mismatch. Expected: ${FORMAT_VERSION}, Got: ${fv}`);
+    return null;
+  }
+
   const def = newEmptyDefinition();
-  if (!obj || typeof obj !== 'object') return def;
   if (obj.Id)                def.Id               = String(obj.Id);
   if (obj.Author != null)    def.Author            = String(obj.Author);
   if (obj.ManufacturerName != null) def.ManufacturerName = String(obj.ManufacturerName);
@@ -660,7 +678,9 @@ document.getElementById('file-input').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const parsed = parseYaml(ev.target.result);
-      state.definition = loadDefinitionFromObj(parsed);
+      const def = loadDefinitionFromObj(parsed);
+      if (!def) { e.target.value = ''; return; }
+      state.definition = def;
       state.selectedIndex = -1;
       fillGeneralEdit();
       renderArticulationList();

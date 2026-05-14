@@ -1,17 +1,15 @@
-# MIDIチャンネル情報の仕様変更
+# ファイルフォーマットバージョン値の追加
 
 ## 課題
 
-DAW1によっては明示的にMIDIチャンネルを指定する、しないという情報を持っている場合があることが分かった。
-現在のこのエディタの仕様では、ステータスバイトにチャンネル情報を含めている。 (`status | channel`)
-
-JSONスキーマ `universal-definition-schema.json` を更新し、MidiMessageオブジェクトに新たに `Channel` というフィールドを追加した。
+JSONスキーマ `universal-definition-schema.json` を更新し、UniversalDefinitionに新たに `FormatVersion` というフィールドを追加した。
 
 ### 成果物の要件
 
-- エディタで Channel 単体の値を保持することができるようにする
-- YAML読み込みの際に MidiMessage オブジェクトの Channel の値を読み取る。存在しない場合は -1を入れる
-- YAML書き込みの際に MidiMessage オブジェクトの Channel の値を出力する。-1 の場合は含めなくて良い
+- エディタで FormatVersion 単体の値を保持することができるようにする
+  - JSコード上で定数として定義すること (値は整数で `1`)
+- YAML読み込みの際に FormatVersion の値を読み取る。存在しない場合や値が一致しない場合はロード中止して、アラートダイアログを表示する
+- YAML書き込みの際に FormatVersion の値を出力する。値は前述で定義した定数を使用すること
 
 ## タスク内容
 
