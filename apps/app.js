@@ -30,6 +30,14 @@ const MIDI_BASE_TO_TYPE = Object.fromEntries(
   Object.entries(MIDI_TYPE_BASE).map(([k, v]) => [v, k])
 );
 
+// YAMAHA Style Midi Note (60 = C3)
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const MIDI_NOTE_LABELS = Array.from({ length: 128 }, (_, n) => {
+  const name = NOTE_NAMES[n % 12];
+  const octave = Math.floor(n / 12) - 2;
+  return `${n}: ${name}${octave}`;
+});
+
 function encodeStatus(type) {
   return MIDI_TYPE_BASE[type] || 0x90;
 }
@@ -205,6 +213,33 @@ function renderArticulationEdit() {
   container.appendChild(extraBtn);
 }
 
+function buildD1NumberInput(msg) {
+  const el = document.createElement('input');
+  el.type = 'number'; el.min = 0; el.max = 127;
+  el.value = msg.Data1 !== undefined ? msg.Data1 : '';
+  el.placeholder = '–';
+  el.addEventListener('input', e => {
+    const v = e.target.value;
+    msg.Data1 = v === '' ? undefined : (parseInt(v) || 0);
+  });
+  return el;
+}
+
+function buildD1NoteSelect(msg) {
+  const el = document.createElement('select');
+  MIDI_NOTE_LABELS.forEach((label, n) => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = label;
+    if (n === (msg.Data1 ?? 0)) opt.selected = true;
+    el.appendChild(opt);
+  });
+  el.addEventListener('change', e => {
+    msg.Data1 = parseInt(e.target.value);
+  });
+  return el;
+}
+
 function createMidiRow(msg, mi, artic) {
   const row = document.createElement('div');
   row.className = 'midi-msg-row';
@@ -224,7 +259,18 @@ function createMidiRow(msg, mi, artic) {
     if (t === msg.type) opt.selected = true;
     statusSel.appendChild(opt);
   });
-  statusSel.addEventListener('change', e => { msg.type = e.target.value; });
+  const d1Wrap = document.createElement('span');
+  const isNoteType = t => t === 'Note On' || t === 'Note Off';
+  function refreshD1() {
+    d1Wrap.innerHTML = '';
+    d1Wrap.appendChild(isNoteType(msg.type) ? buildD1NoteSelect(msg) : buildD1NumberInput(msg));
+  }
+  refreshD1();
+
+  statusSel.addEventListener('change', e => {
+    msg.type = e.target.value;
+    refreshD1();
+  });
 
   const chLabel = document.createElement('span');
   chLabel.className = 'midi-label';
@@ -242,15 +288,6 @@ function createMidiRow(msg, mi, artic) {
   const d1Label = document.createElement('span');
   d1Label.className = 'midi-label';
   d1Label.textContent = 'Data1';
-  const d1Input = document.createElement('input');
-  d1Input.type = 'number';
-  d1Input.min = 0; d1Input.max = 127;
-  d1Input.value = msg.Data1 !== undefined ? msg.Data1 : '';
-  d1Input.placeholder = '–';
-  d1Input.addEventListener('input', e => {
-    const v = e.target.value;
-    msg.Data1 = v === '' ? undefined : (parseInt(v) || 0);
-  });
 
   const d2Label = document.createElement('span');
   d2Label.className = 'midi-label';
@@ -273,7 +310,7 @@ function createMidiRow(msg, mi, artic) {
     renderArticulationEdit();
   });
 
-  row.append(idx, chLabel, chInput, statusLabel, statusSel, d1Label, d1Input, d2Label, d2Input, delBtn);
+  row.append(idx, chLabel, chInput, statusLabel, statusSel, d1Label, d1Wrap, d2Label, d2Input, delBtn);
   return row;
 }
 
