@@ -2,6 +2,11 @@
 
 ## 完了済み（2026-05-14）
 
+- MIDIノートオン/オフの Data1 ドロップダウン化（`apps/app.js`）
+  - Note On / Note Off 選択時、Data1 を音階名付きドロップダウンに動的切り替え
+  - 形式: `<ノートナンバー>: <音階名>`（YAMAHA方式: C3 = MIDI 60）
+  - YAML import / export はノートナンバー数値のまま変更なし
+
 - ファイルフォーマットバージョン値の追加（`apps/app.js`）
   - `FORMAT_VERSION = 1` 定数を追加
   - `newEmptyDefinition()` に `FormatVersion: FORMAT_VERSION` を追加
