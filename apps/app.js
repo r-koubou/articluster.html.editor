@@ -30,7 +30,7 @@ const MIDI_BASE_TO_TYPE = Object.fromEntries(
   Object.entries(MIDI_TYPE_BASE).map(([k, v]) => [v, k])
 );
 
-// YAMAHA 方式: MIDI 60 = C3
+// YAMAHA Style Midi Note (60 = C3)
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const MIDI_NOTE_LABELS = Array.from({ length: 128 }, (_, n) => {
   const name = NOTE_NAMES[n % 12];
