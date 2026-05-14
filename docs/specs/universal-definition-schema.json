@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-06/schema#",
   "$ref": "#/definitions/UniversalDefinition",
+  "description": "Definition of the Universal Definition",
   "definitions": {
     "UniversalDefinition": {
       "title": "UniversalDefinition",
@@ -8,12 +9,26 @@
       "description": "The root of articulation",
       "additionalProperties": false,
       "properties": {
+        "FormatVersion": {
+          "type": "integer",
+          "description": "Universal File Format Version",
+          "examples": [
+            1
+          ]
+        },
         "Id": {
           "type": "string",
-          "format": "uuid"
+          "format": "uuid",
+          "description": "Unique identifier for this Universal Definition",
+          "examples": [
+            "259fda39-6197-49e8-aee1-ab1e568635ad"
+          ]
         },
         "Author": {
-          "type": "string"
+          "type": "string",
+          "examples": [
+            "Your Name"
+          ]
         },
         "ManufacturerName": {
           "type": "string"
@@ -22,10 +37,16 @@
           "type": "string"
         },
         "PatchName": {
-          "type": "string"
+          "type": "string",
+          "examples": [
+            "Guitar",
+            "Bass",
+            "Violin"
+          ]
         },
         "Description": {
-          "type": "string"
+          "type": "string",
+          "description": "Description of this Universal Definition file"
         },
         "Articulations": {
           "type": "array",
@@ -38,6 +59,7 @@
         }
       },
       "required": [
+        "FormatVersion",
         "Id",
         "Author",
         "ManufacturerName",
@@ -47,6 +69,7 @@
       ],
       "examples": [
         {
+          "FormatVersion": 1,
           "Id": "34023d3f-30b0-4646-90e8-5d2978d09d43",
           "Author": "R-Koubou",
           "ManufacturerName": "Acme Corp",
@@ -54,6 +77,10 @@
           "PatchName": "Guitar 1",
           "Description": "Guitar 1 articulation.",
           "Articulations": [
+            {
+              "Name": "Idle",
+              "MidiMessages": []
+            },
             {
               "Name": "Sustain",
               "MidiMessages": [
@@ -135,14 +162,20 @@
         },
         "Channel": {
           "type": "integer",
+          "minimum": -1,
+          "maximum": 15,
           "description": "MIDI Channel (0-15). If `-1` or `not defined`, it will be ignored in conversion"
         },
         "Data1": {
           "type": "integer",
+          "minimum": 0,
+          "maximum": 127,
           "description": "MIDI Data Byte 1 (0-127). If `not defined`, it will be ignored in conversion"
         },
         "Data2": {
           "type": "integer",
+          "minimum": 0,
+          "maximum": 127,
           "description": "MIDI Data Byte 2 (0-127). If `not defined`, it will be ignored in conversion"
         }
       },

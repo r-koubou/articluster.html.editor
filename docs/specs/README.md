@@ -25,3 +25,10 @@ public static readonly IDeserializer DefaultDeserializer
     = new DeserializerBuilder()
         .Build();
 ```
+
+### 項目 FormatVersion
+
+YAMLファイル内のフォーマットバージョンを示す項目。将来的なフォーマット変更に対応するために使用される。
+この項目はエディタ上では非表示でよい。エクスポートされたYAMLファイルには必ず含ませること。
+
+値は整数で、現在のフォーマットバージョンは `1`とする。JSのコード上で定数として定義すること。
