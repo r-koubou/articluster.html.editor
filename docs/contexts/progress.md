@@ -9,6 +9,9 @@
   - YAML export/import を新スキーマ対応（旧形式は互換性なし）
   - FormatVersion: 0 のまま維持
   - Articulations リストと Edit パネルの境界をマウスドラッグでリサイズ可能に
+- 新規 Articulation 作成時の MidiMessages 引き継ぎ機能追加
+  - `#chk-inherit-midi` チェックボックス追加（デフォルト: オン）
+  - チェックオン時、直前の Articulation の MidiMessages をコピーして引き継ぐ
 
 ## 完了済み（2026-05-14）
 

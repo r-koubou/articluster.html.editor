@@ -860,7 +860,12 @@ document.getElementById('btn-add-extra').addEventListener('click', () => {
 document.getElementById('btn-add-articulation').addEventListener('click', () => {
   const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
   if (!grp) return;
-  grp.Articulations.push(newArticulation());
+  const inherit = document.getElementById('chk-inherit-midi').checked;
+  const last = grp.Articulations[grp.Articulations.length - 1];
+  const msgs = (inherit && last)
+    ? last.MidiMessages.map(m => ({ ...m }))
+    : [];
+  grp.Articulations.push({ Name: 'New Articulation', MidiMessages: msgs, Extra: {} });
   state.selectedArticIndex = grp.Articulations.length - 1;
   renderArticulationList();
   renderArticulationEdit();

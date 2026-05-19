@@ -1,57 +1,16 @@
-# JSONスキーマ仕様回収に伴うUIの改善
+# 新規 Articulation 作成時のMidiMessagesの初期値の改善
 
 ## 課題
 
-新しいスキーマ仕様は `/docs/specs/universal-definition-schema_new.json` に記載されている。
-
-- ArticulationGroups というグルーピングを導入
-- 従来のArticulatiions を複数持てるようになった
-
-これまで
-
-```yaml
-Articulations:
-  - Name: articulation1
-    MidiMessages:
-    - Status: 0x90
-      Data1: 60
-      Data2: 127
-  - Name: articulation2
-    MidiMessages:
-    - Status: 0xB0
-      Data1: 64
-      Data2: 127
-```
-
-新しいスキーマ
-
-```yaml
-ArticulationGroups:
-  - Name: group1
-    Articulations:
-    - Name: articulation1
-      MidiMessages:
-      - Status: 0x90
-        Data1: 60
-        Data2: 127
-    - Name: articulation2
-      MidiMessages:
-      - Status: 0xB0
-        Data1: 64
-        Data2: 127
-  - Name: group2
-    Articulations:
-    - Name: articulation3
-      MidiMessages:
-      - Status: 0x80
-        Data1: 60
-        Data2: 0
-```
+新規 Articulation 作成時の MidiMessages の初期値は空である。
+これ自体に問題はないが、多くの場合アーティキュレーションは隣接したノートナンバーやCCナンバーで構成されることが多い。
 
 ### 成果物の要件
 
-- ArticulationGroups の追加、削除、編集ができるようになること
-- 現状のUI構成に無理が生じるようであれば再度レイアウトの見直しを行っても良い
+- 新規作成ボタンを押した際に、直前（JSでいう最終要素）のアーティキュレーションのMIDIメッセージ内容を引き継いで新規作成する
+- ユーザーの選択肢として、引き継ぐ・引き継がない（空のまま）を選べるようにする
+    - 初期値は引き継ぐ（オン）
+    - 設定の永続化は不要
 
 ## タスク内容
 
