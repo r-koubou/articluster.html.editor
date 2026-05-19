@@ -58,11 +58,30 @@
     <div id="articulation-list">
       <div class="list-header">
         <span>Articulations</span>
-        <button id="btn-add-articulation" title="Add articulation">+</button>
+      </div>
+      <div id="group-controls">
+        <div class="group-ctrl-row">
+          <span class="group-ctrl-label">Group</span>
+          <select id="group-select"></select>
+          <button id="btn-add-group" title="Add group">+</button>
+          <button id="btn-del-group" title="Delete group">✕</button>
+        </div>
+        <div class="group-ctrl-row">
+          <span class="group-ctrl-label">Name</span>
+          <input type="text" id="group-name-input" placeholder="Group name">
+        </div>
+        <div class="group-ctrl-row">
+          <span class="group-ctrl-label">Extra</span>
+          <button id="btn-group-extra">Edit</button>
+        </div>
       </div>
       <div id="artic-list-body"></div>
+      <div id="artic-list-footer">
+        <button id="btn-add-articulation" title="Add articulation">+ Articulation</button>
+      </div>
     </div>
 
+    <div id="resize-handle"></div>
     <div id="articulation-edit">
       <h2>Articulation Edit</h2>
       <div id="artic-edit-content">

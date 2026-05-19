@@ -1,19 +1,57 @@
-# MIDIメッセージ編集の改善
+# JSONスキーマ仕様回収に伴うUIの改善
 
 ## 課題
 
-MIDIノートオン、ノートオフのデータ入力で直接数値入力をするのはどの音階なのかが分かりづらい。
+新しいスキーマ仕様は `/docs/specs/universal-definition-schema_new.json` に記載されている。
+
+- ArticulationGroups というグルーピングを導入
+- 従来のArticulatiions を複数持てるようになった
+
+これまで
+
+```yaml
+Articulations:
+  - Name: articulation1
+    MidiMessages:
+    - Status: 0x90
+      Data1: 60
+      Data2: 127
+  - Name: articulation2
+    MidiMessages:
+    - Status: 0xB0
+      Data1: 64
+      Data2: 127
+```
+
+新しいスキーマ
+
+```yaml
+ArticulationGroups:
+  - Name: group1
+    Articulations:
+    - Name: articulation1
+      MidiMessages:
+      - Status: 0x90
+        Data1: 60
+        Data2: 127
+    - Name: articulation2
+      MidiMessages:
+      - Status: 0xB0
+        Data1: 64
+        Data2: 127
+  - Name: group2
+    Articulations:
+    - Name: articulation3
+      MidiMessages:
+      - Status: 0x80
+        Data1: 60
+        Data2: 0
+```
 
 ### 成果物の要件
 
-- MIDIメッセージのデータ編集時、「Note On」または「Note Off」が選択されている場合に限り、Data1 の入力欄をテキストフィールドではなく、プルダウンで選択可能なUIにする
-- 音階名は `C-1, C#-1, C0, C#1, ....` の書式とする
-- 中央ドは YAMAHA 方式 (ノートナンバー60 = C3) とする
-- プルダウンの表示項目の書式は `＜ノートナンバー＞: <音階名>` とする
-    - ノートナンバーは0埋めをしない表記とする (0, 1, 2 ... 127)
-
-- YAML読み込みの際は 0～127の値からプルダウンのインデックスを決定する
-- YAML書き込みの際は音階名ではなく、ノートナンバーの 0～127の値として出力する
+- ArticulationGroups の追加、削除、編集ができるようになること
+- 現状のUI構成に無理が生じるようであれば再度レイアウトの見直しを行っても良い
 
 ## タスク内容
 
