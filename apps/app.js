@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 // Format version
 // ─────────────────────────────────────────────
-const FORMAT_VERSION = '1.0.0';
+const FORMAT_VERSION = 0;
 
 // ─────────────────────────────────────────────
 // MIDI constants
@@ -51,7 +51,8 @@ function decodeStatus(byte) {
 // ─────────────────────────────────────────────
 let state = {
   definition: newEmptyDefinition(),
-  selectedIndex: -1,
+  selectedGroupIndex: 0,
+  selectedArticIndex: -1,
   extraTarget: 'definition', // 'definition' | 'articulation'
 };
 
@@ -64,13 +65,16 @@ function newEmptyDefinition() {
     ProductName: '',
     PatchName: '',
     Description: '',
-    Articulations: [
-        { Name: 'Idle', MidiMessages: [], Extra: {} }
+    ArticulationGroups: [
+      { Name: 'Default', Articulations: [{ Name: 'Idle', MidiMessages: [], Extra: {} }], Extra: {} }
     ],
     Extra: {},
   };
 }
 
+function newArticulationGroup() {
+  return { Name: 'New Group', Articulations: [], Extra: {} };
+}
 function newArticulation() {
   return { Name: 'New Articulation', MidiMessages: [], Extra: {} };
 }
@@ -99,23 +103,46 @@ function bindGeneralEdit() {
 
 function fillGeneralEdit() {
   const d = state.definition;
-  document.getElementById('f-id').value          = d.Id || '';
-  document.getElementById('f-author').value      = d.Author || '';
+  document.getElementById('f-id').value           = d.Id || '';
+  document.getElementById('f-author').value       = d.Author || '';
   document.getElementById('f-manufacturer').value = d.ManufacturerName || '';
-  document.getElementById('f-product').value     = d.ProductName || '';
-  document.getElementById('f-patch').value       = d.PatchName || '';
-  document.getElementById('f-description').value = d.Description || '';
+  document.getElementById('f-product').value      = d.ProductName || '';
+  document.getElementById('f-patch').value        = d.PatchName || '';
+  document.getElementById('f-description').value  = d.Description || '';
+}
+
+// ─────────────────────────────────────────────
+// Group Controls
+// ─────────────────────────────────────────────
+function renderGroupSelect() {
+  const groups = state.definition.ArticulationGroups;
+  const sel = document.getElementById('group-select');
+  sel.innerHTML = '';
+  groups.forEach((g, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = g.Name || '(unnamed)';
+    if (i === state.selectedGroupIndex) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  const nameInput = document.getElementById('group-name-input');
+  const grp = groups[state.selectedGroupIndex];
+  nameInput.value = grp ? grp.Name || '' : '';
 }
 
 // ─────────────────────────────────────────────
 // Articulation List
 // ─────────────────────────────────────────────
 function renderArticulationList() {
+  renderGroupSelect();
   const body = document.getElementById('artic-list-body');
   body.innerHTML = '';
-  state.definition.Articulations.forEach((artic, i) => {
+  const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
+  if (!grp) return;
+
+  grp.Articulations.forEach((artic, i) => {
     const item = document.createElement('div');
-    item.className = 'artic-item' + (i === state.selectedIndex ? ' selected' : '');
+    item.className = 'artic-item' + (i === state.selectedArticIndex ? ' selected' : '');
 
     const nameEl = document.createElement('span');
     nameEl.className = 'artic-name';
@@ -127,9 +154,9 @@ function renderArticulationList() {
     delBtn.title = 'Delete';
     delBtn.addEventListener('click', e => {
       e.stopPropagation();
-      state.definition.Articulations.splice(i, 1);
-      if (state.selectedIndex >= state.definition.Articulations.length) {
-        state.selectedIndex = state.definition.Articulations.length - 1;
+      grp.Articulations.splice(i, 1);
+      if (state.selectedArticIndex >= grp.Articulations.length) {
+        state.selectedArticIndex = grp.Articulations.length - 1;
       }
       renderArticulationList();
       renderArticulationEdit();
@@ -139,7 +166,7 @@ function renderArticulationList() {
     item.appendChild(nameEl);
     item.appendChild(delBtn);
     item.addEventListener('click', () => {
-      state.selectedIndex = i;
+      state.selectedArticIndex = i;
       renderArticulationList();
       renderArticulationEdit();
     });
@@ -154,7 +181,8 @@ function renderArticulationEdit() {
   const container = document.getElementById('artic-edit-content');
   container.innerHTML = '';
 
-  const artic = state.definition.Articulations[state.selectedIndex];
+  const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
+  const artic = grp ? grp.Articulations[state.selectedArticIndex] : null;
   if (!artic) {
     const p = document.createElement('p');
     p.id = 'artic-edit-placeholder';
@@ -328,7 +356,9 @@ function closeExtraModal() {
 
 function getExtraObject() {
   if (state.extraTarget === 'definition') return state.definition.Extra;
-  const artic = state.definition.Articulations[state.selectedIndex];
+  const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
+  if (state.extraTarget === 'group') return grp ? grp.Extra : {};
+  const artic = grp ? grp.Articulations[state.selectedArticIndex] : null;
   return artic ? artic.Extra : {};
 }
 
@@ -421,34 +451,49 @@ function exportYaml() {
   lines.push(`PatchName: ${yamlQuote(d.PatchName)}`);
   if (d.Description) lines.push(`Description: ${yamlQuote(d.Description)}`);
 
-  lines.push('Articulations:');
-  if (d.Articulations.length === 0) {
+  lines.push('ArticulationGroups:');
+  if (d.ArticulationGroups.length === 0) {
     lines[lines.length - 1] += ' []';
   } else {
-    d.Articulations.forEach(artic => {
-      lines.push(`  - Name: ${yamlQuote(artic.Name)}`);
-      lines.push(`    MidiMessages:`);
-      if (artic.MidiMessages.length === 0) {
+    d.ArticulationGroups.forEach(grp => {
+      lines.push(`  - Name: ${yamlQuote(grp.Name)}`);
+      lines.push(`    Articulations:`);
+      if (grp.Articulations.length === 0) {
         lines[lines.length - 1] += ' []';
       } else {
-        artic.MidiMessages.forEach(msg => {
-          const status = encodeStatus(msg.type);
-          lines.push(`      - Status: ${status}`);
-          if (msg.Channel !== undefined && msg.Channel !== -1) {
-            lines.push(`        Channel: ${msg.Channel}`);
+        grp.Articulations.forEach(artic => {
+          lines.push(`      - Name: ${yamlQuote(artic.Name)}`);
+          lines.push(`        MidiMessages:`);
+          if (artic.MidiMessages.length === 0) {
+            lines[lines.length - 1] += ' []';
+          } else {
+            artic.MidiMessages.forEach(msg => {
+              const status = encodeStatus(msg.type);
+              lines.push(`          - Status: ${status}`);
+              if (msg.Channel !== undefined && msg.Channel !== -1) {
+                lines.push(`            Channel: ${msg.Channel}`);
+              }
+              if (msg.Data1 !== undefined && msg.Data1 !== null && msg.Data1 !== '') {
+                lines.push(`            Data1: ${msg.Data1}`);
+              }
+              if (msg.Data2 !== undefined && msg.Data2 !== null && msg.Data2 !== '') {
+                lines.push(`            Data2: ${msg.Data2}`);
+              }
+            });
           }
-          if (msg.Data1 !== undefined && msg.Data1 !== null && msg.Data1 !== '') {
-            lines.push(`        Data1: ${msg.Data1}`);
-          }
-          if (msg.Data2 !== undefined && msg.Data2 !== null && msg.Data2 !== '') {
-            lines.push(`        Data2: ${msg.Data2}`);
+          const articExtraEntries = Object.entries(artic.Extra || {});
+          if (articExtraEntries.length > 0) {
+            lines.push(`        Extra:`);
+            articExtraEntries.forEach(([k, v]) => {
+              lines.push(`          ${yamlQuote(k)}: ${yamlQuote(v)}`);
+            });
           }
         });
       }
-      const extraEntries = Object.entries(artic.Extra || {});
-      if (extraEntries.length > 0) {
+      const grpExtraEntries = Object.entries(grp.Extra || {});
+      if (grpExtraEntries.length > 0) {
         lines.push(`    Extra:`);
-        extraEntries.forEach(([k, v]) => {
+        grpExtraEntries.forEach(([k, v]) => {
           lines.push(`      ${yamlQuote(k)}: ${yamlQuote(v)}`);
         });
       }
@@ -642,10 +687,14 @@ function loadDefinitionFromObj(obj) {
     alert(`FormatVersion mismatch. Expected: ${FORMAT_VERSION}, Got: ${fv}`);
     return null;
   }
+  if (!Array.isArray(obj.ArticulationGroups)) {
+    alert('Invalid file format: ArticulationGroups is missing. Loading aborted.');
+    return null;
+  }
 
   const def = newEmptyDefinition();
-  if (obj.Id)                def.Id               = String(obj.Id);
-  if (obj.Author != null)    def.Author            = String(obj.Author);
+  if (obj.Id)                       def.Id               = String(obj.Id);
+  if (obj.Author != null)           def.Author           = String(obj.Author);
   if (obj.ManufacturerName != null) def.ManufacturerName = String(obj.ManufacturerName);
   if (obj.ProductName != null)      def.ProductName      = String(obj.ProductName);
   if (obj.PatchName != null)        def.PatchName        = String(obj.PatchName);
@@ -655,29 +704,41 @@ function loadDefinitionFromObj(obj) {
       Object.entries(obj.Extra).map(([k, v]) => [String(k), String(v ?? '')])
     );
   }
-  if (Array.isArray(obj.Articulations)) {
-    def.Articulations = obj.Articulations.map(a => {
-      const artic = { Name: '', MidiMessages: [], Extra: {} };
-      if (a.Name != null) artic.Name = String(a.Name);
-      if (Array.isArray(a.MidiMessages)) {
-        artic.MidiMessages = a.MidiMessages.map(m => {
-          const status = parseInt(m.Status) || 0;
-          const { type } = decodeStatus(status);
-          const Channel = (m.Channel != null) ? parseInt(m.Channel) : -1;
-          const msg = { type, Channel };
-          if (m.Data1 != null) msg.Data1 = parseInt(m.Data1);
-          if (m.Data2 != null) msg.Data2 = parseInt(m.Data2);
-          return msg;
-        });
-      }
-      if (a.Extra && typeof a.Extra === 'object') {
-        artic.Extra = Object.fromEntries(
-          Object.entries(a.Extra).map(([k, v]) => [String(k), String(v ?? '')])
-        );
-      }
-      return artic;
-    });
-  }
+
+  def.ArticulationGroups = obj.ArticulationGroups.map(g => {
+    const grp = { Name: '', Articulations: [], Extra: {} };
+    if (g.Name != null) grp.Name = String(g.Name);
+    if (g.Extra && typeof g.Extra === 'object') {
+      grp.Extra = Object.fromEntries(
+        Object.entries(g.Extra).map(([k, v]) => [String(k), String(v ?? '')])
+      );
+    }
+    if (Array.isArray(g.Articulations)) {
+      grp.Articulations = g.Articulations.map(a => {
+        const artic = { Name: '', MidiMessages: [], Extra: {} };
+        if (a.Name != null) artic.Name = String(a.Name);
+        if (Array.isArray(a.MidiMessages)) {
+          artic.MidiMessages = a.MidiMessages.map(m => {
+            const status = parseInt(m.Status) || 0;
+            const { type } = decodeStatus(status);
+            const Channel = (m.Channel != null) ? parseInt(m.Channel) : -1;
+            const msg = { type, Channel };
+            if (m.Data1 != null) msg.Data1 = parseInt(m.Data1);
+            if (m.Data2 != null) msg.Data2 = parseInt(m.Data2);
+            return msg;
+          });
+        }
+        if (a.Extra && typeof a.Extra === 'object') {
+          artic.Extra = Object.fromEntries(
+            Object.entries(a.Extra).map(([k, v]) => [String(k), String(v ?? '')])
+          );
+        }
+        return artic;
+      });
+    }
+    return grp;
+  });
+
   return def;
 }
 
@@ -686,7 +747,8 @@ function loadDefinitionFromObj(obj) {
 // ─────────────────────────────────────────────
 function doNew() {
   state.definition = newEmptyDefinition();
-  state.selectedIndex = -1;
+  state.selectedGroupIndex = 0;
+  state.selectedArticIndex = -1;
   fillGeneralEdit();
   renderArticulationList();
   renderArticulationEdit();
@@ -718,7 +780,8 @@ document.getElementById('file-input').addEventListener('change', e => {
       const def = loadDefinitionFromObj(parsed);
       if (!def) { e.target.value = ''; return; }
       state.definition = def;
-      state.selectedIndex = -1;
+      state.selectedGroupIndex = 0;
+      state.selectedArticIndex = -1;
       fillGeneralEdit();
       renderArticulationList();
       renderArticulationEdit();
@@ -732,9 +795,54 @@ document.getElementById('file-input').addEventListener('change', e => {
 });
 
 // ─────────────────────────────────────────────
+// Group events
+// ─────────────────────────────────────────────
+document.getElementById('group-select').addEventListener('change', e => {
+  state.selectedGroupIndex = parseInt(e.target.value);
+  state.selectedArticIndex = -1;
+  renderArticulationList();
+  renderArticulationEdit();
+});
+
+document.getElementById('group-name-input').addEventListener('input', e => {
+  const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
+  if (!grp) return;
+  grp.Name = e.target.value;
+  const sel = document.getElementById('group-select');
+  if (sel.options[state.selectedGroupIndex]) {
+    sel.options[state.selectedGroupIndex].textContent = e.target.value || '(unnamed)';
+  }
+});
+
+document.getElementById('btn-add-group').addEventListener('click', () => {
+  state.definition.ArticulationGroups.push(newArticulationGroup());
+  state.selectedGroupIndex = state.definition.ArticulationGroups.length - 1;
+  state.selectedArticIndex = -1;
+  renderArticulationList();
+  renderArticulationEdit();
+  toast('Group added', 'success');
+});
+
+document.getElementById('btn-del-group').addEventListener('click', () => {
+  if (state.definition.ArticulationGroups.length <= 1) {
+    toast('Cannot delete the last group', 'error');
+    return;
+  }
+  state.definition.ArticulationGroups.splice(state.selectedGroupIndex, 1);
+  if (state.selectedGroupIndex >= state.definition.ArticulationGroups.length) {
+    state.selectedGroupIndex = state.definition.ArticulationGroups.length - 1;
+  }
+  state.selectedArticIndex = -1;
+  renderArticulationList();
+  renderArticulationEdit();
+  toast('Group deleted', 'success');
+});
+
+// ─────────────────────────────────────────────
 // Extra modal events
 // ─────────────────────────────────────────────
 document.getElementById('btn-def-extra').addEventListener('click', () => openExtraModal('definition'));
+document.getElementById('btn-group-extra').addEventListener('click', () => openExtraModal('group'));
 document.getElementById('btn-modal-close').addEventListener('click', closeExtraModal);
 document.getElementById('modal-overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-overlay')) closeExtraModal();
@@ -750,11 +858,48 @@ document.getElementById('btn-add-extra').addEventListener('click', () => {
 
 // Articulation list
 document.getElementById('btn-add-articulation').addEventListener('click', () => {
-  state.definition.Articulations.push(newArticulation());
-  state.selectedIndex = state.definition.Articulations.length - 1;
+  const grp = state.definition.ArticulationGroups[state.selectedGroupIndex];
+  if (!grp) return;
+  const inherit = document.getElementById('chk-inherit-midi').checked;
+  const last = grp.Articulations[grp.Articulations.length - 1];
+  const msgs = (inherit && last)
+    ? last.MidiMessages.map(m => ({ ...m }))
+    : [];
+  grp.Articulations.push({ Name: 'New Articulation', MidiMessages: msgs, Extra: {} });
+  state.selectedArticIndex = grp.Articulations.length - 1;
   renderArticulationList();
   renderArticulationEdit();
 });
+
+// ─────────────────────────────────────────────
+// Resize handle
+// ─────────────────────────────────────────────
+(function () {
+  const handle = document.getElementById('resize-handle');
+  const list   = document.getElementById('articulation-list');
+  let dragging = false, startX = 0, startWidth = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging   = true;
+    startX     = e.clientX;
+    startWidth = list.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor     = 'col-resize';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const w = Math.max(140, Math.min(500, startWidth + e.clientX - startX));
+    list.style.width = w + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    handle.classList.remove('dragging');
+    document.body.style.userSelect = '';
+    document.body.style.cursor     = '';
+  });
+})();
 
 // ─────────────────────────────────────────────
 // Init
